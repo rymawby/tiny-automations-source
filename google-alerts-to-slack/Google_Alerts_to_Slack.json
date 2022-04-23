@@ -1,0 +1,176 @@
+{
+  "name": "Google Alerts to Slack",
+  "nodes": [
+    {
+      "parameters": {},
+      "name": "Start",
+      "type": "n8n-nodes-base.start",
+      "typeVersion": 1,
+      "position": [
+        240,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "triggerTimes": {
+          "item": [
+            {
+              "hour": 7
+            }
+          ]
+        }
+      },
+      "name": "Cron",
+      "type": "n8n-nodes-base.cron",
+      "typeVersion": 1,
+      "position": [
+        -500,
+        800
+      ]
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "channel": "social",
+        "text": "=Google alert: {{$json[\"title\"]}}  - {{$json[\"link\"]}}",
+        "attachments": [],
+        "otherOptions": {}
+      },
+      "name": "Slack1",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 1,
+      "position": [
+        920,
+        800
+      ],
+      "credentials": {
+        "slackOAuth2Api": {
+          "id": "2",
+          "name": "Slack account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{$json[\"feed\"]}}"
+      },
+      "name": "RSS Feed Read",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1,
+      "position": [
+        700,
+        800
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$json[\"feed\"]}}",
+              "operation": "isEmpty"
+            }
+          ]
+        }
+      },
+      "name": "IF",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        320,
+        720
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "\nitems[0].json.feeds = [\n                    \"https://www.google.com/alerts/feeds/12345581409404114402/1234525054193310532\",\n                    \"https://www.google.com/alerts/feeds/12345581409404114402/12345935688892159086\",\n                    \"https://www.google.com/alerts/feeds/12345581409404114402/1234563125633164967\",\n                    \"https://www.google.com/alerts/feeds/12345581409404114402/1234537100179579905\",\n                    \"https://www.google.com/alerts/feeds/12345581409404114402/1234540289464225414\",\n                    \"https://www.google.com/alerts/feeds/12345581409404114402/1234577577438323748\"]\n\nreturn items;"
+      },
+      "name": "List feeds",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        -140,
+        800
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "items[0].json.feed = \"\";\n\nif(items[0].json.feeds.length > 0){\n  items[0].json.feed = items[0].json.feeds.pop(); \n}\n\nreturn items;"
+      },
+      "name": "Cycle through feeds",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        120,
+        760
+      ]
+    }
+  ],
+  "connections": {
+    "Cron": {
+      "main": [
+        [
+          {
+            "node": "List feeds",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RSS Feed Read": {
+      "main": [
+        [
+          {
+            "node": "Slack1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Cycle through feeds",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "RSS Feed Read",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "List feeds": {
+      "main": [
+        [
+          {
+            "node": "Cycle through feeds",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cycle through feeds": {
+      "main": [
+        [
+          {
+            "node": "IF",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {},
+  "id": 6
+}
