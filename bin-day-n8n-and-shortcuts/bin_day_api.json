@@ -1,0 +1,81 @@
+{
+  "name": "Bin Day API",
+  "nodes": [
+    {
+      "parameters": {},
+      "name": "Start",
+      "type": "n8n-nodes-base.start",
+      "typeVersion": 1,
+      "position": [
+        240,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "path": "925df1d9-a7d8d67c76d9",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "name": "Bin day",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        580,
+        660
+      ],
+      "webhookId": "925df1d9-a7d8d67c76d9"
+    },
+    {
+      "parameters": {
+        "functionCode": "\nfunction getNextDayOfTheWeek(dayName, excludeToday = true, refDate = new Date()) {\n    const dayOfWeek = [\"sun\",\"mon\",\"tue\",\"wed\",\"thu\",\"fri\",\"sat\"]\n                      .indexOf(dayName.slice(0,3).toLowerCase());\n    if (dayOfWeek < 0) return;\n    refDate.setHours(0,0,0,0);\n    refDate.setDate(refDate.getDate() + +!!excludeToday + \n                    (dayOfWeek + 7 - refDate.getDay() - +!!excludeToday) % 7);\n    return refDate;\n}\n\nfunction daysBetweenTwoDates(startDate, endDate) {\n  var millisecondsPerDay = 24 * 60 * 60 * 1000;\n  return Math.round((endDate - startDate) / millisecondsPerDay);\n}\n\nfunction isItFortnightlySince(days) {\n  return days % 14 === 0;\n}\n\nconst INITIAL_BIN_DAY = new Date(2022, 0, 4);\nconst nextBinDay = getNextDayOfTheWeek(\"Tuesday\", false);\n\nconst daysBetweenBinDays = daysBetweenTwoDates(INITIAL_BIN_DAY, nextBinDay);\n\nvar binColor = \"\";\nif(isItFortnightlySince(daysBetweenBinDays)){\n  binColor = \"Blue and Green\";\n} else{\n  binColor = \"Yellow\";\n}\n\nitems[0].json = {announce: \"Put out the \" + binColor + \" bins.\"};\n\n\nreturn items;"
+      },
+      "name": "Function",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        800,
+        660
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        1040,
+        660
+      ]
+    }
+  ],
+  "connections": {
+    "Bin day": {
+      "main": [
+        [
+          {
+            "node": "Function",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Function": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {},
+  "id": 8
+}
